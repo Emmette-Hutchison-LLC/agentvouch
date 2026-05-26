@@ -1,0 +1,63 @@
+{
+  "name": "agentvouch",
+  "version": "0.0.1",
+  "description": "Verifiable Task Contract — typed property-predicate DSL + verifier reference implementation for the agent-native firm. Plugs into ERC-8183's Evaluator slot.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "PROTOCOL.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src tests --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "verifiable-task-contract",
+    "merkle-commitment",
+    "selective-disclosure",
+    "erc-8183",
+    "erc-8004",
+    "agent-protocol",
+    "evaluator",
+    "agentic-commerce",
+    "post-firm-collaboration",
+    "fairswap"
+  ],
+  "author": "Emmette Hutchison LLC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Emmette-Hutchison-LLC/agentvouch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Emmette-Hutchison-LLC/agentvouch/issues"
+  },
+  "homepage": "https://github.com/Emmette-Hutchison-LLC/agentvouch#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@noble/ed25519": "^2.1.0",
+    "@noble/hashes": "^1.5.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
