@@ -18,6 +18,7 @@ import { canonicalizeBytes } from '../util/canonical.js';
 import { sha256 } from '../util/hash.js';
 import { bytesToHex, hexToBytes } from '../util/hex.js';
 import { schemaValidationAdapter } from '../predicates/schema-validation.js';
+import { piiAbsenceAdapter } from '../predicates/pii-absence.js';
 
 export interface EvaluateOptions {
   /**
@@ -40,6 +41,7 @@ const CLAIM_SCHEMA_VERSION = '0.0.1';
  */
 const ADAPTERS: Record<string, PredicateAdapter<unknown>> = {
   [schemaValidationAdapter.predicateType]: schemaValidationAdapter as PredicateAdapter<unknown>,
+  [piiAbsenceAdapter.predicateType]: piiAbsenceAdapter as PredicateAdapter<unknown>,
 };
 
 /**

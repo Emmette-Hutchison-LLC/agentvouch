@@ -10,6 +10,7 @@ import { generateKeyPair, sign, verify, signingPayload } from '../src/signing/ed
 import { merkleRoot, merkleProof } from '../src/merkle/tree.js';
 import { objectToLeaves } from '../src/merkle/object-leaves.js';
 import { schemaPredicate } from '../src/predicates/schema-validation.js';
+import { piiAbsencePredicate, DEFAULT_PII_PATTERNS } from '../src/predicates/pii-absence.js';
 import { evaluate } from '../src/evaluator/evaluate.js';
 import { canonicalizeBytes } from '../src/util/canonical.js';
 import { sha256 } from '../src/util/hash.js';
@@ -25,7 +26,7 @@ const schema = z.object({ summary: z.string(), wordCount: z.number(), approved: 
  */
 async function buildScenario(
   output: Record<string, unknown>,
-  opts: { submissionSchemaVersion?: string } = {}
+  opts: { submissionSchemaVersion?: string; predicate?: Contract['predicates'][number] } = {}
 ) {
   const provider = await generateKeyPair();
   const evaluatorKey = await generateKeyPair();
@@ -33,7 +34,7 @@ async function buildScenario(
   const { leaves } = objectToLeaves(output);
   const root = merkleRoot(leaves);
 
-  const predicate = schemaPredicate(schema);
+  const predicate = opts.predicate ?? schemaPredicate(schema);
   const contractUnsigned = {
     schemaVersion: '0.0.1',
     taskId: 'task-001',
@@ -182,6 +183,27 @@ describe('evaluate — hardening against malformed/malicious reveals', () => {
     await expect(
       evaluate(emptyContract, s.submission, s.evaluatorKey, { requestReveal: s.requestReveal })
     ).rejects.toThrow(/predicate/i);
+  });
+});
+
+describe('evaluate — pii-absence adapter end to end', () => {
+  it('passes a clean output through the pii-absence predicate', async () => {
+    const s = await buildScenario(
+      { summary: 'nothing sensitive here', count: 2 },
+      { predicate: piiAbsencePredicate(DEFAULT_PII_PATTERNS) }
+    );
+    const claim = await evaluate(s.contract, s.submission, s.evaluatorKey, { requestReveal: s.requestReveal });
+    expect(claim.passed).toBe(true);
+  });
+
+  it('fails an output containing an email through the pii-absence predicate', async () => {
+    const s = await buildScenario(
+      { note: 'reach me at jane@example.com' },
+      { predicate: piiAbsencePredicate(DEFAULT_PII_PATTERNS) }
+    );
+    const claim = await evaluate(s.contract, s.submission, s.evaluatorKey, { requestReveal: s.requestReveal });
+    expect(claim.passed).toBe(false);
+    expect(claim.predicateResults[0].detail).toMatch(/PII/i);
   });
 });
 

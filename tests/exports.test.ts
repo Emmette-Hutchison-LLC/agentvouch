@@ -19,4 +19,12 @@ describe('package entry point', () => {
     expect(typeof av.generateKeyPair).toBe('function');
     expect(typeof av.signingPayload).toBe('function');
   });
+
+  it('exposes all three v0 predicate adapter factories', () => {
+    expect(typeof av.schemaPredicate).toBe('function');
+    expect(typeof av.piiAbsencePredicate).toBe('function');
+    expect(typeof av.urlDerivedPredicate).toBe('function');
+    expect(typeof av.createUrlDerivedAdapter).toBe('function');
+    expect(Array.isArray(av.DEFAULT_PII_PATTERNS)).toBe(true);
+  });
 });

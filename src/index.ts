@@ -24,6 +24,16 @@ export { evaluate, type EvaluateOptions } from './evaluator/evaluate.js';
 // Predicate adapters
 export { schemaPredicate, schemaValidationAdapter, type SchemaValidationSpec } from './predicates/schema-validation.js';
 export { zodToJsonSchema, validateJsonSchema, type JsonSchema, type ValidationResult } from './predicates/json-schema.js';
+export { piiAbsencePredicate, piiAbsenceAdapter, DEFAULT_PII_PATTERNS, type PiiAbsenceSpec } from './predicates/pii-absence.js';
+export {
+  urlDerivedPredicate,
+  urlDerivedAdapter,
+  createUrlDerivedAdapter,
+  type UrlDerivedSpec,
+  type UrlDerivedEvidence,
+  type ReclaimAttestation,
+  type AttestationVerifier,
+} from './predicates/url-derived.js';
 
 // Re-export Zod so `schemaPredicate(z.object(...))` works from a single import.
 export { z } from 'zod';

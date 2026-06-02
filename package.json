@@ -11,8 +11,12 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "bin": {
+    "agentvouch-demo": "./bin/agentvouch-demo.mjs"
+  },
   "files": [
     "dist",
+    "bin",
     "PROTOCOL.md",
     "LICENSE",
     "README.md"
