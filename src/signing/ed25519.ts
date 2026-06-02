@@ -10,10 +10,22 @@ import * as ed from '@noble/ed25519';
 
 import type { PublicKey, Signature } from '../types/crypto.js';
 import { bytesToHex, hexToBytes } from '../util/hex.js';
+import { canonicalizeBytes } from '../util/canonical.js';
 
 export interface KeyPair {
   publicKey: PublicKey;     // hex-encoded, 0x-prefixed, 66 chars
   privateKey: Uint8Array;   // 32 raw bytes; KEEP SECRET
+}
+
+/**
+ * The canonical bytes signed over for any object carrying its own `signature`
+ * field (Submission, Reveal, VerifierClaim): canonical-JSON of the object with
+ * the `signature` field removed. See PROTOCOL.md §Signing scheme. This is the
+ * single source of truth so signers and verifiers can never drift.
+ */
+export function signingPayload<T extends object>(obj: T): Uint8Array {
+  const { signature: _signature, ...rest } = obj as Record<string, unknown>;
+  return canonicalizeBytes(rest);
 }
 
 /**
