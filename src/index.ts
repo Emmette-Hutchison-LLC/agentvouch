@@ -25,5 +25,8 @@ export { evaluate, type EvaluateOptions } from './evaluator/evaluate.js';
 export { schemaPredicate, schemaValidationAdapter, type SchemaValidationSpec } from './predicates/schema-validation.js';
 export { zodToJsonSchema, validateJsonSchema, type JsonSchema, type ValidationResult } from './predicates/json-schema.js';
 
+// Re-export Zod so `schemaPredicate(z.object(...))` works from a single import.
+export { z } from 'zod';
+
 // Schema version constant — matches PROTOCOL.md version
 export const SCHEMA_VERSION = '0.0.1' as const;
