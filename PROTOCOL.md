@@ -281,5 +281,6 @@ These are spec-level questions still open before v0.1.0 finalizes:
 3. **Predicate composition**: should `Contract.predicates` support `AND`/`OR`/conditional logic, or stay a flat AND-list? **Default: flat AND** for v0; add composition in v0.2 if needed.
 4. **Pre-image space for `taskId`**: should `taskId` be required to be a hash (deterministic) or allowed as a UUID (random)? **Default: either** — verifier rejects only on duplicate.
 5. **Adapter discovery**: should `predicateType` resolve via a registry (on-chain or off-chain) or via static import in the verifier? **Default: static import** for v0; registry-based in v1.
+6. **Predicate-supplied regex safety (ReDoS)**: adapters whose spec carries caller-supplied regular expressions (e.g. `pii-absence`) can be handed a pathological pattern that backtracks catastrophically against a long disclosed string, hanging the evaluator. The pattern lives in the mutually-signed `Contract`, so it is not unilaterally attacker-injected — but an evaluator should not have to manually vet regex complexity before signing. **Default for v0**: trust the signed contract + enforce the §Leaf size limits cap; **v1**: a linear-time engine (RE2) or per-predicate evaluation timeout with worker isolation.
 
 These resolve in v0.1.0 spec freeze. Issues + discussion welcome.

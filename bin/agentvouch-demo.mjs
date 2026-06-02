@@ -60,7 +60,7 @@ const results = [
   await runCycle('schema-validation / conforming output', { summary: 'ok', wordCount: 1, approved: true }, schemaPredicate(schema)),
   await runCycle('schema-validation / non-conforming output', { summary: 'ok', wordCount: 'one', approved: true }, schemaPredicate(schema)),
   await runCycle('pii-absence / clean output', { note: 'nothing sensitive' }, piiAbsencePredicate(DEFAULT_PII_PATTERNS)),
-  await runCycle('pii-absence / leaks an email', { note: 'email me at jane@example.com' }, piiAbsencePredicate(DEFAULT_PII_PATTERNS)),
+  await runCycle('pii-absence / leaks an UPPERCASE email', { note: 'email me at JANE@EXAMPLE.COM' }, piiAbsencePredicate(DEFAULT_PII_PATTERNS)),
 ];
 
 // Expected: pass, fail, pass, fail.

@@ -22,7 +22,11 @@ import { collectStrings } from '../util/json-strings.js';
 export interface UrlDerivedSpec {
   url: string;
   expectedSubstring: string;
-  maxAgeMs?: number; // if set, reject attestations older than this relative to evidence.now
+  // Freshness window: reject attestations older than this relative to evidence.now.
+  // MANDATORY — PROTOCOL.md §Security requires verifiers to reject stale
+  // attestations, so this adapter refuses a spec without an explicit bound rather
+  // than silently accepting arbitrarily old evidence.
+  maxAgeMs: number;
 }
 
 /** A Reclaim-shaped attestation (sketch). `proof` is opaque to the structural checks. */
@@ -68,15 +72,20 @@ export function createUrlDerivedAdapter(
       if (typeof expectedSubstring !== 'string' || expectedSubstring.length === 0) {
         throw new Error('urlDerivedAdapter.parseSpec: spec.expectedSubstring must be a non-empty string');
       }
-      if (maxAgeMs !== undefined && (typeof maxAgeMs !== 'number' || maxAgeMs < 0)) {
-        throw new Error('urlDerivedAdapter.parseSpec: spec.maxAgeMs must be a non-negative number');
+      if (typeof maxAgeMs !== 'number' || !Number.isFinite(maxAgeMs) || maxAgeMs < 0) {
+        throw new Error('urlDerivedAdapter.parseSpec: spec.maxAgeMs (freshness window, ms) is required and must be a non-negative number');
       }
-      return { url, expectedSubstring, ...(maxAgeMs !== undefined ? { maxAgeMs } : {}) };
+      return { url, expectedSubstring, maxAgeMs };
     },
 
     evaluate(spec: UrlDerivedSpec, evidence: UrlDerivedEvidence): PredicateOutcome {
       const { attestation, now } = evidence;
 
+      // Defensive: evidence is adapter-specific and not provided by the standard
+      // reveal flow — fail closed rather than throw if it's missing.
+      if (attestation === undefined || attestation === null || typeof now !== 'number') {
+        return { passed: false, detail: 'url-derived: evidence missing attestation or now' };
+      }
       // (a) cryptographic proof — injected; throws on the default refuse-verifier.
       if (!verifyAttestation(attestation)) {
         return { passed: false, detail: 'attestation proof failed verification' };
@@ -85,19 +94,22 @@ export function createUrlDerivedAdapter(
       if (attestation.url !== spec.url) {
         return { passed: false, detail: `attestation URL ${attestation.url} does not match spec URL ${spec.url}` };
       }
-      // (c) freshness.
-      if (spec.maxAgeMs !== undefined) {
-        const age = now - attestation.timestamp;
-        if (age < 0 || age > spec.maxAgeMs) {
-          return { passed: false, detail: `attestation is stale: age ${age}ms exceeds maxAgeMs ${spec.maxAgeMs}` };
-        }
+      // (c) freshness (mandatory).
+      const age = now - attestation.timestamp;
+      if (age < 0 || age > spec.maxAgeMs) {
+        return { passed: false, detail: `attestation is stale: age ${age}ms outside [0, ${spec.maxAgeMs}]` };
       }
       // (d) the attested content carries the expected substring.
       if (!attestation.observedContent.includes(spec.expectedSubstring)) {
         return { passed: false, detail: 'expected substring not present in attested content' };
       }
       // (e) the revealed output carries it too — bind output to attested content.
-      const outputStrings = collectStrings(leavesToObject(evidence.revealedLeaves ?? []));
+      let outputStrings;
+      try {
+        outputStrings = collectStrings(leavesToObject(evidence.revealedLeaves ?? []));
+      } catch (err) {
+        return { passed: false, detail: `url-derived: could not scan output (${(err as Error).message})` };
+      }
       const inOutput = outputStrings.some(([, s]) => s.includes(spec.expectedSubstring));
       if (!inOutput) {
         return { passed: false, detail: 'expected substring not present in the revealed output' };

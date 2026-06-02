@@ -37,7 +37,7 @@ const spec = adapter.parseSpec(urlDerivedPredicate({ url: URL, expectedSubstring
 
 describe('urlDerivedPredicate factory', () => {
   it('builds a revealing url-derived predicate', () => {
-    const p = urlDerivedPredicate({ url: URL, expectedSubstring: SUBSTR });
+    const p = urlDerivedPredicate({ url: URL, expectedSubstring: SUBSTR, maxAgeMs: 60_000 });
     expect(p.kind).toBe('revealing');
     expect(p.predicateType).toBe('url-derived');
   });
@@ -45,10 +45,13 @@ describe('urlDerivedPredicate factory', () => {
 
 describe('urlDerivedAdapter.parseSpec', () => {
   it('rejects a spec missing url', () => {
-    expect(() => adapter.parseSpec({ expectedSubstring: 'x' })).toThrow(/url/i);
+    expect(() => adapter.parseSpec({ expectedSubstring: 'x', maxAgeMs: 1000 })).toThrow(/url/i);
   });
   it('rejects a spec missing expectedSubstring', () => {
-    expect(() => adapter.parseSpec({ url: URL })).toThrow(/substring/i);
+    expect(() => adapter.parseSpec({ url: URL, maxAgeMs: 1000 })).toThrow(/substring/i);
+  });
+  it('rejects a spec missing maxAgeMs (freshness is mandatory per PROTOCOL §Security)', () => {
+    expect(() => adapter.parseSpec({ url: URL, expectedSubstring: SUBSTR })).toThrow(/maxAgeMs|fresh/i);
   });
 });
 
@@ -83,6 +86,12 @@ describe('urlDerivedAdapter.evaluate (structural checks)', () => {
     const r = rejectAll.evaluate(spec, ev);
     expect(r.passed).toBe(false);
     expect(r.detail).toMatch(/proof|attestation/i);
+  });
+
+  it('fails closed (does not throw) when the attestation is missing from evidence', () => {
+    const ev = { revealedLeaves: [], now: 1000, attestation: undefined as unknown as ReclaimAttestation };
+    const r = adapter.evaluate(spec, ev);
+    expect(r.passed).toBe(false);
   });
 });
 
